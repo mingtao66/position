@@ -1,0 +1,40 @@
+
+replicaCount: 1
+image:
+  repository: docker.hzbox.net/saas/backend/journal-service
+  tag: latest
+  pullPolicy: Always
+imagePullSecrets: hzbox
+servicePort: 8489
+javaOpts: "-Xmx512M -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:MaxMetaspaceSize=256M"
+
+applicationYml:
+  spring:
+    cloud.config.enabled: false
+    datasource:
+      url: jdbc:mysql://192.168.0.133:63306/journal?characterEncoding=utf-8&allowMultiQueries=true&autoReconnect=true
+      username: vj
+      password: box123$%^51V
+    redis:
+      host: 192.168.0.128
+      port: 6379
+      password: box123456
+      database: 0
+    rabbitmq:
+      host: rabbitmq
+      port: 5672
+      username: rabbitmq
+      password: rabbitmq
+      virtual-host: /
+  eureka:
+    instance:
+      prefer-ip-address: true
+      ip-address: ${JOURNAL_SERVICE_HOST}
+      metadataMap:
+        zone: "k8s-dev"
+    client.serviceUrl.defaultZone: "http://eureka:8761/eureka/"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi

@@ -1,0 +1,61 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          readinessProbe:
+            httpGet:
+              path: /management/health
+              port: {{ .Values.servicePort }}
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /management/health
+              port: {{ .Values.servicePort }}
+            initialDelaySeconds: 120
+            periodSeconds: 10
+          ports:
+            - containerPort: {{ .Values.servicePort }}
+          env:
+            - name: JAVA_OPTS
+              value: {{ default "" .Values.javaOpts | quote }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ default "default" .Values.springProfile | quote }}
+            - name: SERVER_PORT
+              value: {{ default "80" .Values.servicePort | quote }}
+{{- if .Values.redeploy }}
+            - name: FOR_GODS_SAKE_PLEASE_REDEPLOY
+              value: {{ .Values.redeploy | quote }}
+{{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /application.yml
+              subPath: application.yml
+{{- if .Values.resources }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+{{- end }}
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets }}
+{{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Chart.Name }}-config

@@ -1,0 +1,7 @@
+apiVersion: v1
+name: journal
+description: 微加平台-会议助手微服务
+version: 0.2.0
+home: https://www.51vj.cn/
+source:
+  - https://git.hzbox.net/saas/backend/journal-service

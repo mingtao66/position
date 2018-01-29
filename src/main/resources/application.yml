@@ -1,0 +1,92 @@
+vj:
+  img-path: https://boximg.51vj.cn:9443/
+  web-path: https://box.51vj.cn:9443/
+  wechat-path: https://boxm.51vj.cn:9443/
+
+server:
+  port: ${port:8489}
+  use-forward-headers: true
+  tomcat:
+    protocol-header: X-FORWARDED-PROTO
+    remote-ip-header: X-FORWARDED-FOR
+    port-header: X-Forwarded-Port
+    max-threads: 100
+spring:
+  aop:
+    auto: true
+    proxy-target-class: true
+  datasource:
+    druid:
+      initialSize: 10
+      minIdle: 10
+      maxActive: 50
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: "SELECT 'x'"
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+    url: jdbc:mysql://192.168.0.133:63306/journal?characterEncoding=utf-8&allowMultiQueries=true&autoReconnect=true
+    username: vj
+    password: box123$%^51V
+  freemarker.enabled: false
+  redis:
+    host: ${REDIS_HOST:192.168.0.128}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_USERNAME:box123456}
+    timeout: ${REDIS_PASSWORD:20000}
+    database: ${REDIS_DATABASE:0}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq.saas.svc.cluster.local}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:rabbitmq}
+    password: ${RABBITMQ_PASSWORD:rabbitmq}
+    virtual-host: ${RABBITMQ_VIRTUALHOST:/}
+  mvc:
+    view:
+      prefix: /
+      suffix: .html
+  http:
+    multipart: 
+      max-file-size: 20Mb
+      max-request-size: 30Mb
+      resolve-lazily: false
+  jackson:
+    property-naming-strategy: CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES
+      
+management:
+  security.enabled: false
+  context-path: /management
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_ZONE:http://eureka.saas.svc.cluster.local:8761/eureka/}
+
+hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 5000
+logging:
+  level:
+    net.hzbox: DEBUG
+
+# Mybatis 配置
+mybatis:
+  typeAliasesPackage: net.hzbox.vj.journal
+  mapperLocations: classpath:mapper/*.xml
+
+#分页插件配置
+pagehelper:
+  helperDialect: mysql
+  #reasonable：分页合理化参数，默认值为false。当该参数设置为 true 时，pageNum<=0 时会查询第一页， pageNum>pages（超过总数时），会查询最后一页。默认false 时，直接根据参数进行查询。
+  reasonable: false
+  supportMethodsArguments: true
+  params: count=countSql
+
+
+flyway:
+  baseline-on-migrate: true
+  enabled: false

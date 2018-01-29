@@ -1,0 +1,9 @@
+server:
+  port: ${port:8489}
+
+spring:
+  application:
+    name: JournalService
+  cloud:
+    config:
+      uri: ${cloudconfiguri:http://config.hzbox.net:8888}

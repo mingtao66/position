@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+data:
+  application.yml: |
+{{ toYaml .Values.applicationYml | indent 4 }}

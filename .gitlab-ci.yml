@@ -1,0 +1,69 @@
+stages:
+  - build
+  - package
+  - deploy
+
+cache:
+  key: maven-build
+  paths:
+    - target/*.jar
+
+maven-build:
+  stage: build
+  script:
+    - mvn clean package -DskipTests
+  only:
+    - develop
+    - /^feature\/.*/
+    - /^hotfix\/.*/
+    - /^release\/.*/
+
+docker-build:
+  stage: package
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD -e gitlab@51vj.cn $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - develop
+    - /^feature\/.*/
+    - /^hotfix\/.*/
+    - /^release\/.*/
+
+kubernetes-deploy:
+  stage: deploy
+  script:
+    - helm upgrade ${K8S_NAMESPACE}-journal charts/journal --namespace $K8S_NAMESPACE -i --set redeploy=$CI_COMMIT_SHA --set replicaCount=1
+  only:
+    - develop
+    - /^feature\/.*/
+    - /^hotfix\/.*/
+    - /^release\/.*/
+
+# TAG 触发正式编译与打包
+maven-tag-build:
+  stage: build
+  script:
+    - mvn clean package -DskipTests -Dproject.version=$CI_COMMIT_TAG
+  only:
+    - tags
+
+docker-tag-build:
+  stage: package
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD -e gitlab@51vj.cn $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+  only:
+    - tags
+
+helm-tag-deploy:
+  stage: deploy
+  script:
+    - "sed -ie \"s/^version: .*/version: $CI_COMMIT_TAG/g\" charts/journal/Chart.yaml"
+    - "sed -ie \"s/^  tag: .*/  tag: $CI_COMMIT_TAG/g\" charts/journal/values.yaml"
+    - helm dep up charts/journal && helm package charts/journal
+    - cp journal*.tgz /srv/charts
+    - /srv/charts/repo.sh
+  only:
+    - tags
